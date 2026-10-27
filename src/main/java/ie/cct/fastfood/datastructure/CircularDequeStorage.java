@@ -1,7 +1,9 @@
 package ie.cct.fastfood.datastructure;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 /**
@@ -88,6 +90,11 @@ public class CircularDequeStorage<T> implements FoodStorage<T> {
         return (front + size - 1) % trays.length;
     }
 
+    @SuppressWarnings("unchecked")
+    private T itemAt(int position) {
+        return (T) trays[(front + position) % trays.length];
+    }
+
     // ------------------------------------------------------------------
     // FoodStorage interface
     // ------------------------------------------------------------------
@@ -127,12 +134,26 @@ public class CircularDequeStorage<T> implements FoodStorage<T> {
 
     @Override
     public List<T> toList() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        List<T> list = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            list.add(itemAt(i));
+        }
+        return list;
     }
 
     @Override
     public List<T> search(Predicate<T> condition) throws StorageEmptyException {
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (isEmpty()) {
+            throw new StorageEmptyException();
+        }
+        List<T> matches = new ArrayList<>();
+        for (int i = 0; i < size; i++) {   // linear search, front to back
+            T item = itemAt(i);
+            if (condition.test(item)) {
+                matches.add(item);
+            }
+        }
+        return matches;
     }
 
     @Override
@@ -168,8 +189,24 @@ public class CircularDequeStorage<T> implements FoodStorage<T> {
         this.mode = mode;
     }
 
+    /** Lets us use a for-each loop over the trays, front to back. */
     @Override
     public Iterator<T> iterator() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new Iterator<T>() {
+            private int position = 0;
+
+            @Override
+            public boolean hasNext() {
+                return position < size;
+            }
+
+            @Override
+            public T next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return itemAt(position++);
+            }
+        };
     }
 }
