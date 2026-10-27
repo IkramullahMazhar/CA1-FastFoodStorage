@@ -1,17 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
 package ie.cct.fastfood.ui;
-
-/**
- *
- * @author mn169
- */
 
 import ie.cct.fastfood.datastructure.StorageMode;
 import ie.cct.fastfood.model.FoodItem;
+import ie.cct.fastfood.model.FoodType;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -78,10 +69,20 @@ public class TrayPanel extends JPanel {
         g2.drawString("BACK", getWidth() - sideWidth + 22, top - 12);
         drawSideArrows(g2, sideWidth, top, slotHeight);
 
-        // part 1: only the empty trays - items are drawn in the next commit
+        int nextOutPosition = items.isEmpty() ? -1 : (mode == StorageMode.STACK ? 0 : items.size() - 1);
+
+        // In queue mode the trays slide through to the back door, so we draw the
+        // items packed against the BACK side. In stack mode they sit at the FRONT.
+        int offset = mode == StorageMode.QUEUE ? capacity - items.size() : 0;
+
         for (int i = 0; i < capacity; i++) {
             int x = sideWidth + i * (slotWidth + gap);
-            drawEmptySlot(g2, x, top, slotWidth, slotHeight);
+            int position = i - offset;
+            if (position >= 0 && position < items.size()) {
+                drawItem(g2, items.get(position), x, top, slotWidth, slotHeight, position == nextOutPosition);
+            } else {
+                drawEmptySlot(g2, x, top, slotWidth, slotHeight);
+            }
             g2.setColor(Color.GRAY);
             g2.setFont(getFont().deriveFont(11f));
             g2.drawString("Tray " + (i + 1), x + 4, top + slotHeight + 16);
@@ -134,10 +135,45 @@ public class TrayPanel extends JPanel {
         centerText(g2, "empty", x, y + h / 2 + 4, w);
     }
 
+    private void drawItem(Graphics2D g2, FoodItem item, int x, int y, int w, int h, boolean nextOut) {
+        g2.setColor(colourFor(item.getType()));
+        g2.fillRoundRect(x, y, w, h, 12, 12);
+        g2.setStroke(new BasicStroke(nextOut ? 3.5f : 1.2f));
+        g2.setColor(nextOut ? NEXT_OUT : BORDER);
+        g2.drawRoundRect(x, y, w, h, 12, 12);
+
+        g2.setColor(TEXT);
+        g2.setFont(getFont().deriveFont(Font.BOLD, 13f));
+        centerText(g2, item.getName(), x, y + 30, w);
+        g2.setFont(getFont().deriveFont(Font.PLAIN, 11f));
+        centerText(g2, item.getWeightGrams() + " g", x, y + 50, w);
+        centerText(g2, "BB " + item.getBestBefore().format(FoodItem.DATE_FORMAT).substring(0, 5), x, y + 66, w);
+        if (nextOut) {
+            g2.setColor(NEXT_OUT);
+            g2.setFont(getFont().deriveFont(Font.BOLD, 10f));
+            centerText(g2, "NEXT OUT", x, y + 86, w);
+        }
+    }
+
     private void centerText(Graphics2D g2, String text, int x, int baseline, int width) {
         FontMetrics fm = g2.getFontMetrics();
         g2.drawString(text, x + (width - fm.stringWidth(text)) / 2, baseline);
     }
 
+    static Color colourFor(FoodType type) {
+        switch (type) {
+            case BURGER:
+                return new Color(255, 214, 153);
+            case PIZZA:
+                return new Color(255, 179, 166);
+            case FRIES:
+                return new Color(255, 240, 150);
+            case SANDWICH:
+                return new Color(198, 232, 186);
+            case HOTDOG:
+                return new Color(240, 196, 222);
+            default:
+                return Color.WHITE;
+        }
+    }
 }
-
