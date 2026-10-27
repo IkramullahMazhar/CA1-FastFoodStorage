@@ -69,6 +69,25 @@ public class CircularDequeStorage<T> implements FoodStorage<T> {
         return item;
     }
 
+    private T removeBack() throws StorageEmptyException {
+        T item = peekBack();
+        trays[backIndex()] = null;
+        size--;                            // front stays where it is
+        return item;
+    }
+
+    @SuppressWarnings("unchecked")
+    private T peekBack() throws StorageEmptyException {
+        if (isEmpty()) {
+            throw new StorageEmptyException();
+        }
+        return (T) trays[backIndex()];
+    }
+
+    private int backIndex() {
+        return (front + size - 1) % trays.length;
+    }
+
     // ------------------------------------------------------------------
     // FoodStorage interface
     // ------------------------------------------------------------------
@@ -86,7 +105,7 @@ public class CircularDequeStorage<T> implements FoodStorage<T> {
         if (mode == StorageMode.STACK) {
             return removeFront();          // LIFO - same side we added on
         }
-        throw new UnsupportedOperationException("Queue mode not implemented yet");
+        return removeBack();               // FIFO - opposite side
     }
 
     @Override
@@ -94,7 +113,7 @@ public class CircularDequeStorage<T> implements FoodStorage<T> {
         if (mode == StorageMode.STACK) {
             return peekFront();
         }
-        throw new UnsupportedOperationException("Queue mode not implemented yet");
+        return peekBack();
     }
 
     @Override
