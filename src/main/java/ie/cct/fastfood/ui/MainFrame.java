@@ -1,10 +1,12 @@
 package ie.cct.fastfood.ui;
 
+import ie.cct.fastfood.datastructure.StorageException;
 import ie.cct.fastfood.datastructure.StorageMode;
 import ie.cct.fastfood.model.FoodItem;
 import ie.cct.fastfood.model.FoodType;
 import ie.cct.fastfood.service.FoodValidator;
 import ie.cct.fastfood.service.StorageManager;
+import ie.cct.fastfood.service.ValidationException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -18,6 +20,7 @@ import java.awt.event.WindowEvent;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -222,19 +225,60 @@ public class MainFrame extends JFrame {
     // ------------------------------------------------------------------
 
     private void addFood() {
-        // added in the next commit
+        try {
+            FoodItem item = manager.addFood(nameField.getText(), weightField.getText(), dateField.getText());
+            log("ADDED at front: " + item.toDetailString());
+            clearFields();
+            refresh();
+            displayAllQuietly();
+        } catch (ValidationException | StorageException e) {
+            showError("Could not add item", e.getMessage());
+        }
     }
 
     private void removeFood() {
-        // added in the next commit
+        try {
+            String side = manager.getMode() == StorageMode.STACK ? "front" : "back";
+            FoodItem item = manager.removeFood();
+            log("REMOVED from " + side + ": " + item.toDetailString());
+            refresh();
+            showTable("Removed item", List.of(item));
+            JOptionPane.showMessageDialog(this, "Removed from the " + side + " side:\n" + item.toShortString(),
+                    "Item removed", JOptionPane.INFORMATION_MESSAGE);
+        } catch (StorageException e) {
+            showError("Nothing to remove", e.getMessage());
+        }
     }
 
     private void peekTop() {
-        // added in the next commit
+        try {
+            FoodItem next = manager.peekNext();
+            FoodItem last = manager.peekLastAdded();
+            log("PEEK: next out = " + next.getName() + ", last added = " + last.getName());
+            showTable("Top item (next to be removed)", List.of(next));
+            JOptionPane.showMessageDialog(this,
+                    "Top item (next to be removed): " + next.getName()
+                    + "\nLast item added at the front: " + last.getName(),
+                    "Peek", JOptionPane.INFORMATION_MESSAGE);
+        } catch (StorageException e) {
+            showError("Nothing to show", e.getMessage());
+        }
     }
 
     private void displayAll() {
-        // added in the next commit
+        try {
+            List<FoodItem> items = manager.displayAll();
+            showTable("All items in storage (" + items.size() + "/" + manager.capacity() + ")", items);
+            log("DISPLAY: " + items.size() + " item(s) shown");
+        } catch (StorageException e) {
+            showTable("All items in storage", List.of());
+            showError("Nothing to display", e.getMessage());
+        }
+    }
+
+    private void displayAllQuietly() {
+        showTable("All items in storage (" + manager.size() + "/" + manager.capacity() + ")",
+                manager.getItemsFrontToBack());
     }
 
     private void searchByName() {
@@ -264,6 +308,37 @@ public class MainFrame extends JFrame {
 
     private void refresh() {
         trayPanel.update(manager.getItemsFrontToBack(), manager.getMode());
+    }
+
+    private void showTable(String title, List<FoodItem> items) {
+        resultTitle.setText(title);
+        tableModel.setRowCount(0);
+        List<FoodItem> all = manager.getItemsFrontToBack();
+        LocalDate today = manager.today();
+        for (FoodItem item : items) {
+            int position = all.indexOf(item);
+            tableModel.addRow(new Object[]{
+                position >= 0 ? String.valueOf(position + 1) : "removed",
+                item.getName(),
+                item.getWeightGrams(),
+                item.getBestBefore().format(FoodItem.DATE_FORMAT),
+                item.getPlacedAt().format(FoodItem.TIME_FORMAT),
+                status(item, today)
+            });
+        }
+    }
+
+    private String status(FoodItem item, LocalDate today) {
+        if (item.isExpired(today)) {
+            return "EXPIRED";
+        }
+        long days = item.daysUntilExpiry(today);
+        return days == 0 ? "Expires today" : days + " day(s) left";
+    }
+
+    private void showError(String title, String message) {
+        log("ERROR: " + message);
+        JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
     private void clearFields() {
