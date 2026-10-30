@@ -282,24 +282,70 @@ public class MainFrame extends JFrame {
     }
 
     private void searchByName() {
-        // added in the next commit
+        String name = JOptionPane.showInputDialog(this, "Enter a food name to search for:\n" + FoodType.allNames(),
+                "Search by name", JOptionPane.QUESTION_MESSAGE);
+        if (name == null) {
+            return; // user pressed Cancel
+        }
+        try {
+            showSearchResults("name '" + name.trim() + "'", manager.searchByName(name));
+        } catch (ValidationException | StorageException e) {
+            showError("Search failed", e.getMessage());
+        }
     }
 
     private void searchByWeight() {
-        // added in the next commit
+        String[] values = askForRange("Search by weight", "Minimum weight (g):", "Maximum weight (g):");
+        if (values == null) {
+            return;
+        }
+        try {
+            showSearchResults("weight " + values[0] + "g - " + values[1] + "g",
+                    manager.searchByWeight(values[0], values[1]));
+        } catch (ValidationException | StorageException e) {
+            showError("Search failed", e.getMessage());
+        }
     }
 
     private void searchByDate() {
-        // added in the next commit
+        String[] values = askForRange("Search by best-before date", "From (dd/MM/yyyy):", "To (dd/MM/yyyy):");
+        if (values == null) {
+            return;
+        }
+        try {
+            showSearchResults("best-before " + values[0] + " to " + values[1],
+                    manager.searchByBestBefore(values[0], values[1]));
+        } catch (ValidationException | StorageException e) {
+            showError("Search failed", e.getMessage());
+        }
+    }
+
+    private void showSearchResults(String criteria, List<FoodItem> results) {
+        showTable("Search results for " + criteria + ": " + results.size() + " found", results);
+        log("SEARCH " + criteria + ": " + results.size() + " found");
+        if (results.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No food items match " + criteria + ".",
+                    "No results", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            for (FoodItem item : results) {
+                log("   " + item.toDetailString());
+            }
+        }
     }
 
     private void changeMode(StorageMode mode) {
-        // added in the next commit
+        manager.setMode(mode);
+        log("MODE changed to " + mode.getDescription());
+        refresh();
     }
 
     private void exitApplication() {
-        dispose();
-        System.exit(0);
+        int choice = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit?",
+                "Exit application", JOptionPane.YES_NO_OPTION);
+        if (choice == JOptionPane.YES_OPTION) {
+            dispose();
+            System.exit(0);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -334,6 +380,21 @@ public class MainFrame extends JFrame {
         }
         long days = item.daysUntilExpiry(today);
         return days == 0 ? "Expires today" : days + " day(s) left";
+    }
+
+    private String[] askForRange(String title, String firstLabel, String secondLabel) {
+        JTextField first = new JTextField(10);
+        JTextField second = new JTextField(10);
+        JPanel panel = new JPanel(new GridLayout(2, 2, 5, 5));
+        panel.add(new JLabel(firstLabel));
+        panel.add(first);
+        panel.add(new JLabel(secondLabel));
+        panel.add(second);
+        int choice = JOptionPane.showConfirmDialog(this, panel, title, JOptionPane.OK_CANCEL_OPTION);
+        if (choice != JOptionPane.OK_OPTION) {
+            return null;
+        }
+        return new String[]{first.getText(), second.getText()};
     }
 
     private void showError(String title, String message) {
