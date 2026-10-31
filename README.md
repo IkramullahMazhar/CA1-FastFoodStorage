@@ -35,3 +35,31 @@ Every value the user types is checked by `FoodValidator` before it reaches the s
 | Storage empty | Remove / peek / display / search show "Storage is empty" | |
 
 Dates are parsed with `ResolverStyle.STRICT`, so impossible dates like 31/02 are rejected instead of being rolled over to March. The validator takes a `Clock`, so the JUnit tests can fix "today" and always give the same result.
+
+
+## How to run (NetBeans)
+
+1. Clone the repository and in NetBeans choose **File → Open Project** → select the `CA1-FastFoodStorage` folder (NetBeans recognises it as a Maven project).
+2. Press **Run (F6)**. The first build downloads JUnit, so you need internet the first time.
+3. **Run → Test Project (Alt+F6)** runs all 25 JUnit tests.
+
+Requires JDK 17 or newer.
+
+## Test plan (also shown in the video)
+
+| # | Test | Input | Expected | Result |
+|---|---|---|---|---|
+| 1 | Remove on empty storage | click Remove | "Storage is empty" message | Pass |
+| 2 | Search on empty storage | Search "Pizza" | "Storage is empty" message | Pass |
+| 3 | Add valid item | Pizza, 800, date +5 days | Appears at front, tray view updates | Pass |
+| 4 | Invalid name | Pizzaa | Error listing valid foods | Pass |
+| 5 | Invalid weight | Burger, "abc" / 600 | Error with the allowed range | Pass |
+| 6 | Invalid date | 31/02/2026, past date, +15 days | Error with the reason | Pass |
+| 7 | Fill to 8, add 9th | | "Storage is full" | Pass |
+| 8 | Stack remove | add A, B, C → remove | C removed | Pass |
+| 9 | Queue remove | add A, B, C → remove | A removed | Pass |
+| 10 | Peek | | Shows next item, size unchanged | Pass |
+| 11 | Search by name | "pizza" | All pizzas with full details | Pass |
+| 12 | Search by weight / date range | 100–400 g | Only matching items | Pass |
+| 13 | Exit | Exit → Yes | Application closes | Pass |
+
