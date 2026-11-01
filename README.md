@@ -98,4 +98,8 @@ Requires JDK 17 or newer.
 | 10 | Peek | | Shows next item, size unchanged | Pass |
 | 11 | Search by name | "pizza" | All pizzas with full details | Pass |
 | 12 | Search by weight / date range | 100–400 g | Only matching items | Pass |
-| 13 | Exit | Exit → Yes|
+| 13 | Exit | Exit → Yes | Application closes | Pass |
+
+## Use of AI
+
+Generative AI (Claude, Anthropic) was used to support parts of this project. The submitted AI-use declaration document lists exactly where and how.

@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 /**
  * A fixed-size double-ended queue (deque) built on a circular array.
  *
- * Why a deque? The storage unit has two sides. The chef always ADDS at the
+ * Why a Deque? The storage unit has two sides. The chef always ADDS at the
  * front, but can REMOVE from the front (Stack / LIFO) or from the back
  * (Queue / FIFO). A deque allows O(1) access at both ends, so one structure
  * supports both ways of working.
